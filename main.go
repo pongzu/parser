@@ -11,7 +11,7 @@ import (
 func main() {
 	if len(os.Args) != 2 {
 		log.Fatal("コマンドライン引数が間違っている")
-	}
+	} 
 
 }
 
@@ -31,11 +31,14 @@ func run() error {
 		return err
 	}
 
+	// 今から全てのノードの値を取得してきて、そこから文字列か判断して、文字列であれば、SQL文かどうか判断して、その場合は綺麗にする
+
 	for _, v := range file.Decls {
 		ast.Print(fs, v)
 	}
 	return nil
 }
+
 
 func getFile() (*os.File, error) {
 	file, err := os.Open(os.Args[1])
