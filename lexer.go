@@ -32,7 +32,6 @@ func lex(src io.Reader) ([]string, error) {
 	}
 
 	var strings []string
-
 	ast.Inspect(node, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.BasicLit:

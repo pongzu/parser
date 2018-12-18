@@ -22,7 +22,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		//parse(strings)
+		parseStrings(strings)
 
 	}
 }
