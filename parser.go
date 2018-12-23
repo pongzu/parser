@@ -4,6 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"log"
+	"strings"
+
+	s "github.com/derekparker/delve/service/test"
 )
 
 // Token は意味のある文字を表す
@@ -20,24 +24,15 @@ const (
 	FROM     // FROM key word
 )
 
-// isSomethingに値をわたしながら、SQLと判断できたらFormmatに渡している
-func parseStrings(strings []string) {
-	for _, v := range strings {
-		if isSQL(v) {
-			formatSQL(v)
-		}
-	}
-}
-
-type parser struct {
+type Parser struct {
 	r *bufio.Reader
 }
 
-func newParser(src io.Reader) *parser {
-	return &Parser{r: src}
+func NewParser(src io.Reader) *Parser {
+	return &Parser{r: bufio.NewReader(src)}
 }
 
-func (p *parser) read() rune {
+func (p *Parser) read() rune {
 	eof := rune(0)
 	ch, _, err := p.r.ReadRune()
 	if err != nil {
@@ -46,22 +41,22 @@ func (p *parser) read() rune {
 	return ch
 }
 
-func (p *parser) unread() error {
+func (p *Parser) unread() error {
 	if err := p.r.UnreadRune(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *parser) scan() (tok Token, lit string) {
+func (p *Parser) scan() (tok Token, lit string) {
 	ch := p.read()
 
 	switch {
 	case isWhiteSpace(ch):
 		p.unread()
-		return scanWhiteSpace()
+		return p.scanWhiteSpace()
 	case isLetter(ch):
-		return ScanIdent()
+		return p.ScanIdent()
 	case ch == '*':
 		return ASTERISK, string(ch)
 	case ch == ',':
@@ -73,42 +68,42 @@ func (p *parser) scan() (tok Token, lit string) {
 }
 
 func isWhiteSpace(ch rune) bool {
-	return ch ==  ' ' || ch == '\t' || ch == "\n"
+	return ch == ' ' || ch == '\t' || ch == "\n"
 }
 
-func(p *parser) scanWhiteSpace() (tok Token, lit string) {
+func (p *Parser) scanWhiteSpace() (tok Token, lit string) {
 	var buf bytes.Buffer
 
 	// ここで発生するえらーはそのままログに出しておいたらいいレベル
 	_, err := buf.WriteRune(p.read())
-	if err != nil{
+	if err != nil {
 		log.Println(err)
 	}
 
 	for {
 		ch := p.read()
-		
-		if ch == '0'{
+
+		if ch == '0' {
 			break
-		}else if !isWhiteSpace(ch) {
+		} else if !isWhiteSpace(ch) {
 			p.unread()
 			break
-		}else {
-            buf.WriteRune(ch)
+		} else {
+			buf.WriteRune(ch)
 		}
 	}
 	return WS, buf.String()
 }
 
-func isLetter(ch rune)bool{
-	return (ch > 'a' && ch < 'z') || (ch > 'A' && ch < Z) || (ch > 'あ' &&  ch < 'ん')
+func isLetter(ch rune) bool {
+	return (ch > 'a' && ch < 'z') || (ch > 'A' && ch < Z) || (ch > 'あ' && ch < 'ん')
 }
 
 func isDigit(ch rune) bool {
 	return (ch >= '0' && ch <= '9')
 }
 
-func (p *parser) ScanIdent() (tok Token, lit string) {
+func (p *Parser) ScanIdent() (tok Token, lit string) {
 	var buf bytes.Buffer
 	ch := p.read()
 	_, err := buf.WriteRune(ch)
@@ -117,10 +112,10 @@ func (p *parser) ScanIdent() (tok Token, lit string) {
 	}
 
 	for {
-		if ch := s.read()
-		if ch == '0'{
+		ch := p.read()
+		if ch == '0' {
 			break
-		}else if !isLetter(ch) && !isDigit(ch) {
+		} else if !isLetter(ch) && !isDigit(ch) {
 			s.unread()
 			break
 		} else {
@@ -136,5 +131,3 @@ func (p *parser) ScanIdent() (tok Token, lit string) {
 	}
 	return IDENT, buf.String()
 }
-
-

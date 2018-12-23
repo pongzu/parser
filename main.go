@@ -16,13 +16,12 @@ func main() {
 		}
 		defer f.Close()
 
-		// 取得してきた文字列をパースメソッドにわたす
+		// ASTに分解して、ファイルから文字列のみを取得している
 		strings, err := lex(f)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		parseStrings(strings)
+		p := new(Parser)
 
 	}
 }
