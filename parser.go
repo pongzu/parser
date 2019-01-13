@@ -6,50 +6,41 @@ import (
 	"io"
 	"log"
 	"strings"
-
-	s "github.com/derekparker/delve/service/test"
 )
 
 // Token は意味のある文字を表す
 type Token int
 
 const (
-	ILLEGALToken = iota
-	EOF
-	WS       // 空白
-	IDENT    //Fields,TableNameなど
-	ASTERISK //*
-	COMMA    //,
-	SELECT   // SELECT key word
-	FROM     // FROM key word
+	ILLEGALToken = iota // some token that can not recognized
+	EOF                 // end of file
+	WS                  // 空白
+	IDENT               //Fields,TableNameなど
+	ASTERISK            //*
+	COMMA               //,
+	SELECT              // SELECT key word
+	FROM                // FROM key word
 )
 
-type Parser struct {
+// SelectStmt はセレクト文をトークンに分割して、スペースも排除された状態
+type SelectStmt struct {
+	tokens []int
+}
+
+type Scanner struct {
 	r *bufio.Reader
 }
 
-func NewParser(src io.Reader) *Parser {
-	return &Parser{r: bufio.NewReader(src)}
+func NewScanner(src io.Reader) *Scanner {
+	return &Scanner{r: bufio.NewReader(src)}
 }
 
-func (p *Parser) read() rune {
-	eof := rune(0)
-	ch, _, err := p.r.ReadRune()
-	if err != nil {
-		return eof
-	}
-	return ch
+func (stmt *SelectStmt) parseSelectStmt(src string) {
+	scanner := NewScanner(strings.NewReader(src))
 }
 
-func (p *Parser) unread() error {
-	if err := p.r.UnreadRune(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *Parser) scan() (tok Token, lit string) {
-	ch := p.read()
+func (s *Scanner) scan() (tok Token, lit string) {
+	ch := s.read()
 
 	switch {
 	case isWhiteSpace(ch):
@@ -67,11 +58,27 @@ func (p *Parser) scan() (tok Token, lit string) {
 	return ILLEGALToken, string(ch)
 }
 
+func (s *Scanner) read() rune {
+	eof := rune(0)
+	ch, _, err := s.r.ReadRune()
+	if err != nil {
+		return eof
+	}
+	return ch
+}
+
+func (s *Scanner) unread() error {
+	if err := p.r.UnreadRune(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func isWhiteSpace(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == "\n"
 }
 
-func (p *Parser) scanWhiteSpace() (tok Token, lit string) {
+func (s *Scanner) scanWhiteSpace() (tok Token, lit string) {
 	var buf bytes.Buffer
 
 	// ここで発生するえらーはそのままログに出しておいたらいいレベル
@@ -103,7 +110,7 @@ func isDigit(ch rune) bool {
 	return (ch >= '0' && ch <= '9')
 }
 
-func (p *Parser) ScanIdent() (tok Token, lit string) {
+func (s *Scanner) ScanIdent() (tok Token, lit string) {
 	var buf bytes.Buffer
 	ch := p.read()
 	_, err := buf.WriteRune(ch)
