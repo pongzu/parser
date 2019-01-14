@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	var s = "select * from unko"
+	var s = "select * from sometable"
 	stmt := &SelectStmt{}
 	stmt.FormatSelectStmt(s)
 }
@@ -41,7 +41,6 @@ const (
 
 func (stmt *SelectStmt) FormatSelectStmt(src string) {
 	scanner := NewScanner(strings.NewReader(src))
-
 	for {
 		token, field := scanner.ScanIgnoreWhiteSpace()
 		if token == EOF {
@@ -50,7 +49,25 @@ func (stmt *SelectStmt) FormatSelectStmt(src string) {
 		stmt.tokens = append(stmt.tokens, token)
 		stmt.fields = append(stmt.fields, field)
 	}
-	fmt.Println(stmt.tokens)
+	fmt.Println(stmt.format())
+}
+
+func (stmt *SelectStmt) format() string {
+	buf := &bytes.Buffer{}
+
+	for i, token := range stmt.tokens {
+		switch token {
+		case SELECT:
+			buf.WriteString("SELECT\n")
+		case IDENT:
+			buf.WriteString("\t" + stmt.fields[i])
+		case FROM:
+			buf.WriteString("FROM\n")
+		case ASTERISK:
+			buf.WriteString("\t*\n")
+		}
+	}
+	return buf.String()
 }
 
 func isWhiteSpace(ch rune) bool {
